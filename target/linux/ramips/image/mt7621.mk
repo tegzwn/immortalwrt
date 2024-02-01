@@ -3080,6 +3080,30 @@ define Device/zte_e8820s
 endef
 TARGET_DEVICES += zte_e8820s
 
+define Device/zte_e8820v2
+  $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
+  IMAGE_SIZE := 16064k
+  DEVICE_VENDOR := ZTE
+  DEVICE_MODEL := E8820V2
+  DEVICE_VARIANT := 16M
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb2 \
+	  kmod-usb-ledtrig-usbport
+endef
+TARGET_DEVICES += zte_e8820v2
+
+define Device/zte_e8820v2-32m
+  $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
+  IMAGE_SIZE := 32128k
+  DEVICE_VENDOR := ZTE
+  DEVICE_MODEL := E8820V2
+  DEVICE_VARIANT := 32M
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb2 \
+	  kmod-usb-ledtrig-usbport
+endef
+TARGET_DEVICES += zte_e8820v2-32m
+
 define Device/zyxel_lte3301-plus
   $(Device/nand)
   DEVICE_VENDOR := ZyXEL
