@@ -142,13 +142,30 @@ define U-Boot/rockpro64-rk3399
 endef
 
 
+# RK3566 boards
+
+define U-Boot/Default/rk3566
+  BUILD_SUBTARGET:=armv8
+  DEPENDS:=+PACKAGE_u-boot-$(1):trusted-firmware-a-rk3566
+  ATF:=$(RK3566_ATF)
+  TPL:=$(RK3566_TPL)
+endef
+
+define U-Boot/radxa-cm3-io-rk3566
+  $(U-Boot/Default/rk3566)
+  NAME:=CM3 IO
+  BUILD_DEVICES:= \
+    radxa_cm3-io
+endef
+
+
 # RK3568 boards
 
 define U-Boot/Default/rk3568
   BUILD_SUBTARGET:=armv8
   DEPENDS:=+PACKAGE_u-boot-$(1):trusted-firmware-a-rk3568
   ATF:=$(RK3568_ATF)
-  DDR:=$(RK3568_DDR)
+  TPL:=$(RK3568_TPL)
 endef
 
 define U-Boot/fastrhino-r66s-rk3568
@@ -186,11 +203,32 @@ define U-Boot/nanopi-r5s-rk3568
     friendlyarm_nanopi-r5s
 endef
 
+define U-Boot/photonicat-rk3568
+  $(U-Boot/Default/rk3568)
+  NAME:=Photonicat
+  BUILD_DEVICES:= \
+    ariaboard_photonicat
+endef
+
+define U-Boot/radxa-e25-rk3568
+  $(U-Boot/Default/rk3568)
+  NAME:=E25
+  BUILD_DEVICES:= \
+    radxa_e25
+endef
+
 define U-Boot/roc-pc-rk3568
   $(U-Boot/Default/rk3568)
   NAME:=Station P2
   BUILD_DEVICES:= \
     firefly_roc-rk3568-pc
+endef
+
+define U-Boot/rock-3a-rk3568
+  $(U-Boot/Default/rk3568)
+  NAME:=Rock 3A
+  BUILD_DEVICES:= \
+    radxa_rock-3a
 endef
 
 
@@ -200,7 +238,7 @@ define U-Boot/Default/rk3588
   BUILD_SUBTARGET:=armv8
   DEPENDS:=+PACKAGE_u-boot-$(1):trusted-firmware-a-rk3588
   ATF:=$(RK3588_ATF)
-  DDR:=$(RK3588_DDR)
+  TPL:=$(RK3588_TPL)
 endef
 
 define U-Boot/nanopc-t6-rk3588
@@ -270,12 +308,16 @@ UBOOT_TARGETS := \
   roc-cc-rk3328 \
   rock-pi-e-rk3328 \
   rock64-rk3328 \
+  radxa-cm3-io-rk3566 \
   fastrhino-r66s-rk3568 \
   fastrhino-r68s-rk3568 \
   mrkaio-m68s-rk3568 \
   nanopi-r5c-rk3568 \
   nanopi-r5s-rk3568 \
+  photonicat-rk3568 \
+  radxa-e25-rk3568 \
   roc-pc-rk3568 \
+  rock-3a-rk3568 \
   nanopc-t6-rk3588 \
   orangepi-5-plus-rk3588 \
   rock5b-rk3588 \
@@ -292,13 +334,12 @@ UBOOT_CUSTOMIZE_CONFIG := \
 	--set-str MKIMAGE_DTC_PATH $(PKG_BUILD_DIR)/scripts/dtc/dtc
 
 UBOOT_MAKE_FLAGS += \
-  PATH=$(STAGING_DIR_HOST)/bin:$(PATH) \
   BL31=$(STAGING_DIR_IMAGE)/$(ATF) \
-  $(if $(DDR),ROCKCHIP_TPL=$(STAGING_DIR_IMAGE)/$(DDR))
+  $(if $(TPL),ROCKCHIP_TPL=$(STAGING_DIR_IMAGE)/$(TPL))
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR_IMAGE)
-ifneq ($(DDR),)
+ifneq ($(TPL),)
 	$(CP) $(PKG_BUILD_DIR)/idbloader.img $(STAGING_DIR_IMAGE)/$(BUILD_VARIANT)-idbloader.img
 	$(CP) $(PKG_BUILD_DIR)/u-boot.itb $(STAGING_DIR_IMAGE)/$(BUILD_VARIANT)-u-boot.itb
 else

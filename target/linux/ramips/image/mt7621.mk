@@ -497,7 +497,7 @@ define Device/belkin_rt1800
   DEVICE_MODEL := RT1800
   DEVICE_PACKAGES := kmod-mt7915-firmware kmod-usb3
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | \
 	append-squashfs4-fakeroot
   IMAGES += factory.bin
@@ -674,7 +674,7 @@ define Device/dlink_covr-x1860-a1
   DEVICE_PACKAGES := kmod-mt7915-firmware
   UBINIZE_OPTS := -E 5
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | \
 	append-squashfs4-fakeroot
   IMAGES += factory.bin recovery.bin
@@ -713,7 +713,7 @@ define Device/dlink_dap-x1860-a1
   DEVICE_VARIANT := A1
   KERNEL_SIZE := 8192k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGES += factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | \
@@ -1168,7 +1168,7 @@ define Device/h3c_tx180x
   KERNEL_SIZE := 8192k
   IMAGE_SIZE := 120832k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL_INITRAMFS := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL_INITRAMFS := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   KERNEL := $$(KERNEL_INITRAMFS) | h3c-blank-header
   DEVICE_VENDOR := H3C
@@ -1197,7 +1197,7 @@ define Device/haier-sim_wr1800k
   $(Device/nand)
   IMAGE_SIZE := 125440k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
 ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
   ARTIFACTS := initramfs-factory.bin
@@ -1323,7 +1323,7 @@ define Device/iodata_wn-deax1800gr
   IMAGE_SIZE := 47104k
   UBINIZE_OPTS := -E 5
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   ARTIFACTS := initramfs-factory.bin
@@ -1455,14 +1455,18 @@ define Device/iptime_ax2004m
   $(Device/nand)
   IMAGE_SIZE := 121344k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
-  IMAGES += recovery.bin
-  IMAGE/recovery.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | \
+  ARTIFACTS := initramfs-factory.bin
+  ARTIFACT/initramfs-factory.bin := append-image-stage initramfs-kernel.bin | \
 	check-size | iptime-crc32 ax2004m
   DEVICE_VENDOR := ipTIME
   DEVICE_MODEL := AX2004M
-  DEVICE_PACKAGES := kmod-mt7915-firmware kmod-usb3 -uboot-envtools
+  DEVICE_PACKAGES := kmod-mt7915-firmware kmod-usb3
+  DEVICE_COMPAT_VERSION := 2.0
+  DEVICE_COMPAT_MESSAGE := NMBM has been newly enabled, and its flash block \
+	mapping might be incompatible with existing installation. \
+	New installation with factory image via recovery mode is recommended.
 endef
 TARGET_DEVICES += iptime_ax2004m
 
@@ -1472,7 +1476,7 @@ define Device/iptime_t5004
   UIMAGE_NAME := t5004
   DEVICE_VENDOR := ipTIME
   DEVICE_MODEL := T5004
-  DEVICE_PACKAGES := -wpad-basic-openssl -uboot-envtools
+  DEVICE_PACKAGES := -wpad-basic-openssl
 endef
 TARGET_DEVICES += iptime_t5004
 
@@ -1502,12 +1506,6 @@ define Device/jcg_q20
 endef
 TARGET_DEVICES += jcg_q20
 
-define Device/jcg_q20-pb-boot
-  $(Device/jcg_q20)
-  DEVICE_MODEL += (pb-boot)
-endef
-TARGET_DEVICES += jcg_q20-pb-boot
-
 define Device/jcg_y2
   $(Device/dsa-migration)
   $(Device/uimage-lzma-loader)
@@ -1521,13 +1519,23 @@ define Device/jcg_y2
 endef
 TARGET_DEVICES += jcg_y2
 
+define Device/jdcloud_re-cp-02
+  $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
+  IMAGE_SIZE := 16000k
+  DEVICE_VENDOR := JD-Cloud
+  DEVICE_MODEL := RE-CP-02
+  DEVICE_PACKAGES := kmod-mt7915-firmware kmod-sdhci-mt7620 automount
+endef
+TARGET_DEVICES += jdcloud_re-cp-02
 
 define Device/jdcloud_re-sp-01b
+  $(Device/dsa-migration)
   IMAGE_SIZE := 27328k
   DEVICE_VENDOR := JDCloud
   DEVICE_MODEL := RE-SP-01B
-  DEVICE_PACKAGES := kmod-fs-ext4 kmod-mt7603 kmod-mt7615e \
-	kmod-mt7615-firmware kmod-sdhci-mt7620 kmod-usb3
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e kmod-mt7615-firmware \
+	kmod-sdhci-mt7620 kmod-usb3 automount
 endef
 TARGET_DEVICES += jdcloud_re-sp-01b
 
@@ -1813,7 +1821,7 @@ define Device/netgear_eax12
   NETGEAR_ENC_MODEL_LIST := EAX12;EAX11v2;EAX15v2
   IMAGE_SIZE := 57344k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | \
 	append-squashfs4-fakeroot
   IMAGES += factory.img
@@ -2000,7 +2008,7 @@ define Device/netgear_wax202
   NETGEAR_ENC_REGION := US
   IMAGE_SIZE := 38912k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | \
 	append-squashfs4-fakeroot
   IMAGES += factory.img
@@ -2205,7 +2213,9 @@ TARGET_DEVICES += snr_snr-cpe-me2-sfp
 
 define Device/storylink_sap-g3200u3
   $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
   IMAGE_SIZE := 7872k
+  UIMAGE_NAME := SAP-G3200
   DEVICE_VENDOR := STORYLiNK
   DEVICE_MODEL := SAP-G3200U3
   DEVICE_PACKAGES := kmod-mt76x2 kmod-usb3 kmod-usb-ledtrig-usbport \
@@ -2410,7 +2420,8 @@ define Device/tplink_er605-v2
   DEVICE_PACKAGES := -wpad-basic-openssl kmod-usb3 -uboot-envtools
   KERNEL_IN_UBI := 1
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGES += sysupgrade.tar
   IMAGE_SIZE := 127744k
 endef
@@ -2424,7 +2435,7 @@ define Device/tplink_ex220-v1
   DEVICE_PACKAGES := kmod-mt7915-firmware -uboot-envtools
   TPLINK_BOARD_ID := EX220-V1
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGE_SIZE := 15744k
 endef
@@ -2516,6 +2527,7 @@ define Device/ubnt_edgerouter_common
 	ubnt-erx-factory-image $(KDIR)/tmp/$$(KERNEL_INITRAMFS_PREFIX)-factory.tar
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   DEVICE_PACKAGES += -wpad-basic-openssl -uboot-envtools
+  DEFAULT := n
 endef
 
 define Device/ubnt_edgerouter-x
@@ -2657,7 +2669,7 @@ define Device/wavlink_ws-wn572hp3-4g
   DEVICE_VARIANT := 4G
   IMAGE_SIZE := 15040k
   KERNEL_LOADADDR := 0x82000000
-  KERNEL := kernel-bin | relocate-kernel 0x80001000 | lzma | \
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$$$(BLOCKSIZE) | \
 	append-rootfs | pad-rootfs | check-size | append-metadata
@@ -2929,6 +2941,31 @@ define Device/yuncore_fap690
   DEVICE_PACKAGES := kmod-mt7915-firmware -uboot-envtools
 endef
 TARGET_DEVICES += yuncore_fap690
+
+define Device/yuncore_g720
+  $(Device/dsa-migration)
+  DEVICE_VENDOR := YunCore
+  DEVICE_MODEL := G720
+  DEVICE_PACKAGES := kmod-mt7915-firmware
+  IMAGE_SIZE := 15808k
+  SUPPORTED_DEVICES += mt7621-rfb-ax-nor
+endef
+TARGET_DEVICES += yuncore_g720
+
+define Device/z-router_zr-2660
+  $(Device/dsa-migration)
+  $(Device/nand)
+  DEVICE_VENDOR := Z-ROUTER
+  DEVICE_MODEL := ZR-2660
+  DEVICE_ALT0_VENDOR := Routerich
+  DEVICE_ALT0_MODEL := AX1800
+  IMAGE_SIZE := 90112k
+  KERNEL_LOADADDR := 0x82000000
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  DEVICE_PACKAGES += kmod-mt7915-firmware kmod-usb3 -uboot-envtools
+endef
+TARGET_DEVICES += z-router_zr-2660
 
 define Device/zbtlink_zbt-we1326
   $(Device/dsa-migration)
